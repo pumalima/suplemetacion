@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seguimiento de Suplementación Infantil</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: #f4f6f9;
+      color: #111827;
+    }
+
+    header {
+      background: #0f766e;
+      color: white;
+      padding: 18px;
+      text-align: center;
+    }
+
+    main {
+      max-width: 1450px;
+      margin: 20px auto;
+      padding: 0 12px;
+    }
+
+    .card {
+      background: white;
+      padding: 18px;
+      border-radius: 12px;
+      margin-bottom: 18px;
+      box-shadow: 0 4px 14px rgba(0,0,0,.08);
+    }
+
+    h1, h2 {
+      margin-top: 0;
+    }
+
+    h2 {
+      color: #0f766e;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 12px;
+    }
+
+    label {
+      font-weight: bold;
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 9px;
+      border: 1px solid #cbd5e1;
+      border-radius: 7px;
+      font-size: 14px;
+    }
+
+    button {
+      border: none;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .acciones {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      margin-top: 15px;
+    }
+
+    .btn-guardar { background: #16a34a; color: white; }
+    .btn-nuevo { background: #2563eb; color: white; }
+    .btn-editar { background: #f59e0b; color: white; }
+    .btn-eliminar { background: #dc2626; color: white; }
+    .btn-imprimir { background: #475569; color: white; }
+
+    .edad-box {
+      background: #ecfeff;
+      border: 1px solid #67e8f9;
+      color: #155e75;
+      padding: 12px;
+      border-radius: 9px;
+      font-weight: bold;
+      margin-top: 12px;
+    }
+
+    .nota {
+      background: #eff6ff;
+      border-left: 5px solid #2563eb;
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+    }
+
+    .tabla-scroll {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      min-width: 1450px;
+      border-collapse: collapse;
+      background: white;
+    }
+
+    th, td {
+      border: 1px solid #cbd5e1;
+      padding: 8px;
+      text-align: center;
+      vertical-align: middle;
+      font-size: 13px;
+    }
+
+    th {
+      background: #e7e3fb;
+      font-weight: bold;
+    }
+
+    .cabecera-base {
+      background: #f3f4f6;
+    }
+
+    .mes-importante {
+      background: #ddd8f4;
+    }
+
+    .subheader {
+      background: #eeeafb;
+    }
+
+    .check {
+      transform: scale(1.25);
+      cursor: pointer;
+    }
+
+    .fecha-mini {
+      font-size: 12px;
+      color: #374151;
+      margin-top: 5px;
+      font-weight: bold;
+    }
+
+    .verde { background: #dcfce7 !important; }
+    .naranja { background: #fed7aa !important; }
+    .rojo { background: #fecaca !important; }
+
+    .badge {
+      display: inline-block;
+      padding: 5px 9px;
+      border-radius: 999px;
+      font-weight: bold;
+      font-size: 12px;
+    }
+
+    .badge-verde { background: #bbf7d0; color: #166534; }
+    .badge-naranja { background: #fed7aa; color: #9a3412; }
+    .badge-rojo { background: #fecaca; color: #991b1b; }
+
+    @media print {
+      .no-print, .acciones {
+        display: none;
+      }
+      body {
+        background: white;
+      }
+      .card {
+        box-shadow: none;
+        border: 1px solid #ddd;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="alertaApp" class="alerta-app"></div>
+  <header>
+    <h1>Seguimiento de Suplementación Infantil</h1>
+    <p>Base de datos en Google Sheets</p>
+  </header>
+
+  <main>
+    <section class="card no-print">
+      <h2>Niños registrados</h2>
+      <div class="nota">
+        Las fechas de suplemento se calculan automáticamente cada <strong>30 días</strong> desde la primera entrega. Verde = recibió, naranja = por vencer, rojo = vencido o pendiente.
+      </div>
+      <div id="resumenAlertas" class="resumen-alertas"></div>
+      <input id="buscar" type="text" placeholder="Buscar por nombre, DNI, HC o teléfono" oninput="mostrarBase()">
+      <div class="tabla-scroll" style="margin-top:12px;">
+        <table>
+          <thead>
+            <tr>
+              <th>Estado</th><th>Nombre del Niño</th><th>DNI</th><th>HC</th><th>Teléfono</th><th>Edad Actual</th><th>Primera Entrega</th><th>Próxima Entrega</th><th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="baseNinos"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 id="tituloFormulario">Registrar nuevo niño</h2>
+      <input type="hidden" id="id">
+      <div class="grid">
+        <div><label>Nombres</label><input id="nombres" type="text" placeholder="Nombres"></div>
+        <div><label>Apellidos</label><input id="apellidos" type="text" placeholder="Apellidos"></div>
+        <div><label>DNI</label><input id="dni" type="text" maxlength="8" placeholder="DNI"></div>
+        <div><label>HC</label><input id="hc" type="text" placeholder="Historia Clínica"></div>
+        <div><label>Teléfono</label><input id="telefono" type="text" placeholder="Teléfono"></div>
+        <div><label>Fecha de nacimiento</label><input id="fechaNacimiento" type="date"></div>
+        <div><label>Primera entrega de suplemento</label><input id="primeraEntrega" type="date"></div>
+      </div>
+      <div class="edad-box" id="edadActual">Edad actual: --</div>
+    </section>
+
+    <section class="card">
+      <h2>Tabla de seguimiento</h2>
+      <div class="tabla-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th class="cabecera-base" rowspan="2">Nombre<br>del Niño</th>
+              <th class="cabecera-base" rowspan="2">DNI</th>
+              <th class="cabecera-base" rowspan="2">HC</th>
+              <th class="cabecera-base" rowspan="2">Teléfono</th>
+              <th class="cabecera-base" rowspan="2">Edad<br>Actual</th>
+              <th>4 meses</th><th>5 meses</th><th class="mes-importante" colspan="3">6 meses</th><th>7 meses</th><th>8 meses</th><th class="mes-importante" colspan="3">9 meses</th><th>10 meses</th><th>11 meses</th><th class="mes-importante" colspan="3">12 meses</th>
+            </tr>
+            <tr>
+              <th class="subheader">Suplem.</th><th class="subheader">Suplem.</th><th class="subheader">CRED</th><th class="subheader">Suplem.</th><th class="subheader">Dosaje<br>Hb</th><th class="subheader">Suplem.</th><th class="subheader">Suplem.</th><th class="subheader">CRED</th><th class="subheader">Suplem.</th><th class="subheader">Dosaje<br>Hb</th><th class="subheader">Suplem.</th><th class="subheader">Suplem.</th><th class="subheader">CRED</th><th class="subheader">TA</th><th class="subheader">Dosaje<br>Hb</th>
+            </tr>
+          </thead>
+          <tbody id="tablaSeguimiento"></tbody>
+        </table>
+      </div>
+      <div class="acciones">
+        <button class="btn-nuevo" onclick="nuevoNino()">Nuevo niño</button>
+        <button class="btn-guardar" onclick="guardarNino()">Guardar / Actualizar</button>
+        <button class="btn-imprimir" onclick="generarPDF()">Descargar reporte PDF</button>
+        <button class="btn-eliminar" onclick="eliminarNinoActual()">Eliminar</button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const DIAS_ENTREGA = 30;
+    let ninos = [];
+
+    const controles = [
+      { id: 'sup4', tipo: 'check', fecha: true },
+      { id: 'sup5', tipo: 'check', fecha: true },
+      { id: 'cred6', tipo: 'check' },
+      { id: 'sup6', tipo: 'check', fecha: true },
+      { id: 'hb6', tipo: 'number' },
+      { id: 'sup7', tipo: 'check', fecha: true },
+      { id: 'sup8', tipo: 'check', fecha: true },
+      { id: 'cred9', tipo: 'check' },
+      { id: 'sup9', tipo: 'check', fecha: true },
+      { id: 'hb9', tipo: 'number' },
+      { id: 'sup10', tipo: 'check', fecha: true },
+      { id: 'sup11', tipo: 'check', fecha: true },
+      { id: 'cred12', tipo: 'check' },
+      { id: 'ta12', tipo: 'check' },
+      { id: 'hb12', tipo: 'number' }
+    ];
+
+    const suplementosOrden = ['sup4', 'sup5', 'sup6', 'sup7', 'sup8', 'sup9', 'sup10', 'sup11'];
+
+    function sumarDias(fecha, dias) {
+      if (!fecha) return '';
+      const f = new Date(fecha + 'T00:00:00');
+      f.setDate(f.getDate() + dias);
+      return f.toISOString().split('T')[0];
+    }
+
+    function calcularEdad(fecha) {
+      if (!fecha) return '--';
+
+      const nacimiento = new Date(fecha + 'T00:00:00');
+      const hoy = new Date();
+
+      let meses = (hoy.getFullYear() - nacimiento.getFullYear()) * 12;
+      meses += hoy.getMonth() - nacimiento.getMonth();
+
+      let dias = hoy.getDate() - nacimiento.getDate();
+
+      if (dias < 0) {
+        meses--;
+        const ultimoMes = new Date(hoy.getFullYear(), hoy.getMonth(), 0);
+        dias += ultimoMes.getDate();
+      }
+
+      return `${meses} mes(es) y ${dias} día(s)`;
+    }
+
+    function fechasAutomaticas(primeraEntrega) {
+      const fechas = {};
+      suplementosOrden.forEach((id, index) => {
+        fechas[id] = sumarDias(primeraEntrega, index * DIAS_ENTREGA);
+      });
+      return fechas;
+    }
+
+    function mostrarNotificacion(mensaje, tipo = 'ok') {
+      const alerta = document.getElementById('alertaApp');
+      alerta.className = 'alerta-app';
+      alerta.classList.add(tipo === 'ok' ? 'alerta-ok' : tipo === 'error' ? 'alerta-error' : 'alerta-warning');
+      alerta.innerHTML = mensaje;
+      alerta.style.display = 'block';
+      setTimeout(() => { alerta.style.display = 'none'; }, 5000);
+    }
+
+    function camposFaltantes(nino) {
+      const faltan = [];
+      if (!nino.nombres) faltan.push('Nombres');
+      if (!nino.apellidos) faltan.push('Apellidos');
+      if (!nino.dni) faltan.push('DNI');
+      if (!nino.fechaNacimiento) faltan.push('Fecha de nacimiento');
+      if (!nino.primeraEntrega) faltan.push('Primera entrega de suplemento');
+      return faltan;
+    }
+
+    function estadoPorFecha(fechaProgramada, recibido) {
+      if (recibido) return { clase: 'verde', badge: 'badge-verde', texto: 'Recibió' };
+      if (!fechaProgramada) return { clase: 'rojo', badge: 'badge-rojo', texto: 'Sin fecha' };
+      const hoy = new Date();
+      const fecha = new Date(fechaProgramada + 'T00:00:00');
+      const faltan = Math.ceil((fecha - hoy) / (1000 * 60 * 60 * 24));
+      if (faltan < 0) return { clase: 'rojo', badge: 'badge-rojo', texto: 'Vencido' };
+      if (faltan <= 5) return { clase: 'naranja', badge: 'badge-naranja', texto: 'Por vencer' };
+      return { clase: '', badge: 'badge-verde', texto: 'Programado' };
+    }
+
+    function crearFilaSeguimiento(nino = null) {
+      const tbody = document.getElementById('tablaSeguimiento');
+      tbody.innerHTML = '';
+      const actual = nino || obtenerDatosFormulario(false);
+      const fechas = fechasAutomaticas(actual.primeraEntrega);
+      const tr = document.createElement('tr');
+
+      tr.innerHTML = `
+        <td>${actual.nombres || '--'} ${actual.apellidos || ''}</td>
+        <td>${actual.dni || '--'}</td>
+        <td>${actual.hc || '--'}</td>
+        <td>${actual.telefono || '--'}</td>
+        <td>${calcularEdad(actual.fechaNacimiento)}</td>`;
+
+      controles.forEach(c => {
+        const valor = actual.seguimiento && actual.seguimiento[c.id] ? actual.seguimiento[c.id] : '';
+        const fecha = fechas[c.id] || '';
+        const td = document.createElement('td');
+
+        if (c.fecha) {
+          const estado = estadoPorFecha(fecha, !!valor);
+          if (estado.clase) td.classList.add(estado.clase);
+        }
+
+        if (c.tipo === 'check') {
+          td.innerHTML = `<input class="check" id="${c.id}" type="checkbox" ${valor ? 'checked' : ''} onchange="actualizarColores()">${c.fecha ? `<div class="fecha-mini">${fecha || '--'}</div>` : ''}`;
+        } else {
+          td.innerHTML = `<input id="${c.id}" type="number" step="0.1" placeholder="Hb" value="${valor || ''}">`;
+        }
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    }
+
+    function actualizarColores() {
+      const primeraEntrega = document.getElementById('primeraEntrega').value;
+      const fechas = fechasAutomaticas(primeraEntrega);
+      suplementosOrden.forEach(id => {
+        const input = document.getElementById(id);
+        if (!input) return;
+        const td = input.closest('td');
+        td.classList.remove('verde', 'naranja', 'rojo');
+        const estado = estadoPorFecha(fechas[id], input.checked);
+        if (estado.clase) td.classList.add(estado.clase);
+      });
+    }
+
+    function obtenerDatosFormulario(conId = true) {
+      const seguimiento = {};
+      controles.forEach(c => {
+        const el = document.getElementById(c.id);
+        if (!el) return;
+        seguimiento[c.id] = c.tipo === 'check' ? el.checked : el.value;
+      });
+      return {
+        id: conId ? document.getElementById('id').value : '',
+        nombres: document.getElementById('nombres').value.trim(),
+        apellidos: document.getElementById('apellidos').value.trim(),
+        dni: document.getElementById('dni').value.trim(),
+        hc: document.getElementById('hc').value.trim(),
+        telefono: document.getElementById('telefono').value.trim(),
+        fechaNacimiento: document.getElementById('fechaNacimiento').value,
+        primeraEntrega: document.getElementById('primeraEntrega').value,
+        seguimiento: seguimiento
+      };
+    }
+
+    function actualizarVistaFormulario() {
+      document.getElementById('edadActual').textContent = 'Edad actual: ' + calcularEdad(document.getElementById('fechaNacimiento').value);
+      crearFilaSeguimiento();
+      actualizarColores();
+    }
+
+    const URL_GOOGLE_SCRIPT = 'https://script.google.com/macros/s/AKfycby4ob2myHsozSJv9EkV421LVAqGjc_swVfnEy5_ek1Z2H4HTnZqdiVDor5_E9uq98FF/exec';
+
+    function cargarDesdeGoogle() {
+      const callbackName = 'recibirNinos_' + Date.now();
+      const script = document.createElement('script');
+
+      window[callbackName] = function(lista) {
+        ninos = lista || [];
+        mostrarBase();
+        mostrarAlertasVencimiento();
+        delete window[callbackName];
+        script.remove();
+      };
+
+      script.onerror = function() {
+        mostrarNotificacion('Error al cargar datos. Verifique que Apps Script esté publicado como aplicación web.', 'error');
+        delete window[callbackName];
+        script.remove();
+      };
+
+      script.src = URL_GOOGLE_SCRIPT + '?accion=listar&callback=' + callbackName;
+      document.body.appendChild(script);
+    }
+
+    function guardarNino() {
+      const nino = obtenerDatosFormulario(true);
+      const faltan = camposFaltantes(nino);
+      if (faltan.length > 0) {
+        mostrarNotificacion('Falta llenar: ' + faltan.join(', '), 'error');
+        return;
+      }
+
+      const callbackName = 'guardarRespuesta_' + Date.now();
+      const script = document.createElement('script');
+
+      window[callbackName] = function(respuesta) {
+        if (respuesta && respuesta.ok) {
+          mostrarNotificacion('Guardado correctamente en Google Sheets.', 'ok');
+          nuevoNino();
+          cargarDesdeGoogle();
+        } else {
+          mostrarNotificacion('Error al guardar en Google Sheets.', 'error');
+        }
+        delete window[callbackName];
+        script.remove();
+      };
+
+      script.onerror = function() {
+        mostrarNotificacion('Error al guardar. Verifique que Apps Script esté publicado correctamente.', 'error');
+        delete window[callbackName];
+        script.remove();
+      };
+
+      script.src = URL_GOOGLE_SCRIPT + '?accion=guardar&callback=' + callbackName + '&nino=' + encodeURIComponent(JSON.stringify(nino));
+      document.body.appendChild(script);
+    }
+
+    function proximaEntregaPendiente(nino) {
+      const fechas = fechasAutomaticas(nino.primeraEntrega);
+      for (const id of suplementosOrden) {
+        if (!nino.seguimiento || !nino.seguimiento[id]) return fechas[id];
+      }
+      return 'Completo';
+    }
+
+    function estadoGeneral(nino) {
+      const proxima = proximaEntregaPendiente(nino);
+      if (proxima === 'Completo') return { clase: 'verde', badge: 'badge-verde', texto: 'Completo' };
+      return estadoPorFecha(proxima, false);
+    }
+
+    function mostrarAlertasVencimiento() {
+      const contenedor = document.getElementById('resumenAlertas');
+      if (!contenedor) return;
+
+      const alertas = [];
+
+      ninos.forEach(n => {
+        const proxima = proximaEntregaPendiente(n);
+        if (proxima === 'Completo') return;
+        const estado = estadoPorFecha(proxima, false);
+        if (estado.texto === 'Vencido' || estado.texto === 'Por vencer') {
+          alertas.push(`${n.nombres || ''} ${n.apellidos || ''} - ${estado.texto} - Próxima entrega: ${proxima}`);
+        }
+      });
+
+      if (alertas.length === 0) {
+        contenedor.style.display = 'none';
+        contenedor.innerHTML = '';
+        return;
+      }
+
+      contenedor.style.display = 'block';
+      contenedor.innerHTML = `<strong>Notificación de suplementación:</strong> Hay ${alertas.length} niño(s) con suplemento vencido o por vencer.<ul>${alertas.map(a => `<li>${a}</li>`).join('')}</ul>`;
+      mostrarNotificacion(`Atención: hay ${alertas.length} niño(s) con suplementación vencida o por vencer.`, 'warning');
+    }
+
+    function mostrarBase() {
+      const tbody = document.getElementById('baseNinos');
+      const buscar = document.getElementById('buscar').value.toLowerCase();
+      tbody.innerHTML = '';
+      const lista = ninos.filter(n => `${n.nombres || ''} ${n.apellidos || ''} ${n.dni || ''} ${n.hc || ''} ${n.telefono || ''}`.toLowerCase().includes(buscar));
+
+      if (lista.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9">No hay niños registrados.</td></tr>';
+        return;
+      }
+
+      lista.forEach(n => {
+        const estado = estadoGeneral(n);
+        const proxima = proximaEntregaPendiente(n);
+        const tr = document.createElement('tr');
+        if (estado.clase) tr.classList.add(estado.clase);
+        tr.innerHTML = `
+          <td><span class="badge ${estado.badge}">${estado.texto}</span></td>
+          <td>${n.nombres || ''} ${n.apellidos || ''}</td>
+          <td>${n.dni || ''}</td>
+          <td>${n.hc || ''}</td>
+          <td>${n.telefono || ''}</td>
+          <td>${calcularEdad(n.fechaNacimiento)}</td>
+          <td>${n.primeraEntrega || ''}</td>
+          <td>${proxima}</td>
+          <td><button class="btn-editar" onclick="editarNino('${n.id}')">Editar</button></td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function editarNino(id) {
+      const n = ninos.find(x => x.id == id);
+      if (!n) return;
+      document.getElementById('tituloFormulario').textContent = 'Editar / actualizar niño';
+      document.getElementById('id').value = n.id || '';
+      document.getElementById('nombres').value = n.nombres || '';
+      document.getElementById('apellidos').value = n.apellidos || '';
+      document.getElementById('dni').value = n.dni || '';
+      document.getElementById('hc').value = n.hc || '';
+      document.getElementById('telefono').value = n.telefono || '';
+      document.getElementById('fechaNacimiento').value = n.fechaNacimiento || '';
+      document.getElementById('primeraEntrega').value = n.primeraEntrega || '';
+      crearFilaSeguimiento(n);
+      document.getElementById('edadActual').textContent = 'Edad actual: ' + calcularEdad(n.fechaNacimiento);
+      actualizarColores();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function nuevoNino() {
+      document.getElementById('tituloFormulario').textContent = 'Registrar nuevo niño';
+      ['id', 'nombres', 'apellidos', 'dni', 'hc', 'telefono', 'fechaNacimiento', 'primeraEntrega'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('edadActual').textContent = 'Edad actual: --';
+      crearFilaSeguimiento();
+    }
+
+    function eliminarNinoActual() {
+      const id = document.getElementById('id').value;
+      if (!id) { mostrarNotificacion('Primero seleccione un niño para eliminar.', 'error'); return; }
+      if (!confirm('¿Eliminar este niño de Google Sheets?')) return;
+
+      const callbackName = 'eliminarRespuesta_' + Date.now();
+      const script = document.createElement('script');
+
+      window[callbackName] = function(respuesta) {
+        if (respuesta && respuesta.ok) {
+          mostrarNotificacion('Niño eliminado.', 'ok');
+          nuevoNino();
+          cargarDesdeGoogle();
+        } else {
+          mostrarNotificacion('Error al eliminar.', 'error');
+        }
+        delete window[callbackName];
+        script.remove();
+      };
+
+      script.onerror = function() {
+        mostrarNotificacion('Error al eliminar. Verifique Apps Script.', 'error');
+        delete window[callbackName];
+        script.remove();
+      };
+
+      script.src = URL_GOOGLE_SCRIPT + '?accion=eliminar&callback=' + callbackName + '&id=' + encodeURIComponent(id);
+      document.body.appendChild(script);
+    }
+
+    function generarPDF() {
+      if (!window.jspdf) {
+        mostrarNotificacion('No se pudo cargar la librería PDF. Revise su conexión a internet.', 'error');
+        return;
+      }
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF('p', 'mm', 'a4');
+      const fechaReporte = new Date().toLocaleDateString('es-PE');
+
+      doc.setFontSize(16);
+      doc.text('Reporte de Suplementación Infantil', 14, 16);
+      doc.setFontSize(10);
+      doc.text('Fecha del reporte: ' + fechaReporte, 14, 23);
+
+      let y = 34;
+
+      if (!ninos || ninos.length === 0) {
+        doc.setFontSize(12);
+        doc.text('No hay niños registrados.', 14, y);
+        doc.save('Reporte_Suplementacion_Infantil.pdf');
+        return;
+      }
+
+      ninos.forEach((nino, index) => {
+        const estado = estadoGeneral(nino);
+        const proxima = proximaEntregaPendiente(nino);
+
+        if (y > 255) {
+          doc.addPage();
+          y = 18;
+        }
+
+        doc.setFontSize(12);
+        doc.text((index + 1) + '. ' + (nino.nombres || '') + ' ' + (nino.apellidos || ''), 14, y);
+        y += 6;
+
+        doc.setFontSize(10);
+        doc.text('DNI: ' + (nino.dni || '-') + ' | HC: ' + (nino.hc || '-') + ' | Teléfono: ' + (nino.telefono || '-'), 14, y);
+        y += 5;
+        doc.text('Edad: ' + calcularEdad(nino.fechaNacimiento) + ' | Primera entrega: ' + (nino.primeraEntrega || '-'), 14, y);
+        y += 5;
+        doc.text('Estado: ' + estado.texto + ' | Próxima entrega: ' + proxima, 14, y);
+        y += 8;
+
+        doc.line(14, y, 196, y);
+        y += 6;
+      });
+
+      doc.save('Reporte_Suplementacion_Infantil.pdf');
+      mostrarNotificacion('Reporte PDF descargado correctamente.', 'ok');
+    }
+
+    ['nombres', 'apellidos', 'dni', 'hc', 'telefono', 'fechaNacimiento', 'primeraEntrega'].forEach(id => {
+      document.getElementById(id).addEventListener('input', actualizarVistaFormulario);
+      document.getElementById(id).addEventListener('change', actualizarVistaFormulario);
+    });
+
+    crearFilaSeguimiento();
+    cargarDesdeGoogle();
+  </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</body>
+</html>
