@@ -106,6 +106,48 @@
       margin-bottom: 12px;
     }
 
+    .alerta-app {
+      display: none;
+      position: fixed;
+      top: 15px;
+      right: 15px;
+      max-width: 420px;
+      z-index: 9999;
+      padding: 14px 16px;
+      border-radius: 10px;
+      font-weight: bold;
+      box-shadow: 0 6px 18px rgba(0,0,0,.2);
+    }
+
+    .alerta-ok {
+      background: #dcfce7;
+      color: #166534;
+      border: 1px solid #86efac;
+    }
+
+    .alerta-error {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fca5a5;
+    }
+
+    .alerta-warning {
+      background: #ffedd5;
+      color: #9a3412;
+      border: 1px solid #fdba74;
+    }
+
+    .resumen-alertas {
+      display: none;
+      background: #fff7ed;
+      border-left: 5px solid #f97316;
+      color: #9a3412;
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      font-size: 14px;
+    }
+
     .tabla-scroll {
       overflow-x: auto;
     }
@@ -145,6 +187,7 @@
     .check {
       transform: scale(1.25);
       cursor: pointer;
+      width: auto;
     }
 
     .fecha-mini {
@@ -171,8 +214,8 @@
     .badge-rojo { background: #fecaca; color: #991b1b; }
 
     @media print {
-      .no-print, .acciones {
-        display: none;
+      .no-print, .acciones, .alerta-app {
+        display: none !important;
       }
       body {
         background: white;
@@ -186,6 +229,7 @@
 </head>
 <body>
   <div id="alertaApp" class="alerta-app"></div>
+
   <header>
     <h1>Seguimiento de Suplementación Infantil</h1>
     <p>Base de datos en Google Sheets</p>
@@ -195,7 +239,7 @@
     <section class="card no-print">
       <h2>Niños registrados</h2>
       <div class="nota">
-        Las fechas de suplemento se calculan automáticamente cada <strong>30 días</strong> desde la primera entrega. Verde = recibió, naranja = por vencer, rojo = vencido o pendiente.
+        Las fechas de suplemento se calculan automáticamente cada <strong>30 días</strong> desde la primera entrega. Verde = recibió o control completo, naranja = por vencer, rojo = vencido o pendiente.
       </div>
       <div id="resumenAlertas" class="resumen-alertas"></div>
       <input id="buscar" type="text" placeholder="Buscar por nombre, DNI, HC o teléfono" oninput="mostrarBase()">
@@ -203,7 +247,15 @@
         <table>
           <thead>
             <tr>
-              <th>Estado</th><th>Nombre del Niño</th><th>DNI</th><th>HC</th><th>Teléfono</th><th>Edad Actual</th><th>Primera Entrega</th><th>Próxima Entrega</th><th>Acciones</th>
+              <th>Estado</th>
+              <th>Nombre del Niño</th>
+              <th>DNI</th>
+              <th>HC</th>
+              <th>Teléfono</th>
+              <th>Edad Actual</th>
+              <th>Primera Entrega</th>
+              <th>Próxima Entrega</th>
+              <th>Acciones</th>
             </tr>
           </thead>
           <tbody id="baseNinos"></tbody>
@@ -237,10 +289,32 @@
               <th class="cabecera-base" rowspan="2">HC</th>
               <th class="cabecera-base" rowspan="2">Teléfono</th>
               <th class="cabecera-base" rowspan="2">Edad<br>Actual</th>
-              <th>4 meses</th><th>5 meses</th><th class="mes-importante" colspan="3">6 meses</th><th>7 meses</th><th>8 meses</th><th class="mes-importante" colspan="3">9 meses</th><th>10 meses</th><th>11 meses</th><th class="mes-importante" colspan="3">12 meses</th>
+              <th>4 meses</th>
+              <th>5 meses</th>
+              <th class="mes-importante" colspan="3">6 meses</th>
+              <th>7 meses</th>
+              <th>8 meses</th>
+              <th class="mes-importante" colspan="3">9 meses</th>
+              <th>10 meses</th>
+              <th>11 meses</th>
+              <th class="mes-importante" colspan="3">12 meses</th>
             </tr>
             <tr>
-              <th class="subheader">Suplem.</th><th class="subheader">Suplem.</th><th class="subheader">CRED</th><th class="subheader">Suplem.</th><th class="subheader">Dosaje<br>Hb</th><th class="subheader">Suplem.</th><th class="subheader">Suplem.</th><th class="subheader">CRED</th><th class="subheader">Suplem.</th><th class="subheader">Dosaje<br>Hb</th><th class="subheader">Suplem.</th><th class="subheader">Suplem.</th><th class="subheader">CRED</th><th class="subheader">TA</th><th class="subheader">Dosaje<br>Hb</th>
+              <th class="subheader">Suplem.</th>
+              <th class="subheader">Suplem.</th>
+              <th class="subheader">CRED</th>
+              <th class="subheader">Suplem.</th>
+              <th class="subheader">Dosaje<br>Hb</th>
+              <th class="subheader">Suplem.</th>
+              <th class="subheader">Suplem.</th>
+              <th class="subheader">CRED</th>
+              <th class="subheader">Suplem.</th>
+              <th class="subheader">Dosaje<br>Hb</th>
+              <th class="subheader">Suplem.</th>
+              <th class="subheader">Suplem.</th>
+              <th class="subheader">CRED</th>
+              <th class="subheader">TA</th>
+              <th class="subheader">Dosaje<br>Hb</th>
             </tr>
           </thead>
           <tbody id="tablaSeguimiento"></tbody>
@@ -262,22 +336,28 @@
     const controles = [
       { id: 'sup4', tipo: 'check', fecha: true },
       { id: 'sup5', tipo: 'check', fecha: true },
-      { id: 'cred6', tipo: 'check' },
-      { id: 'sup6', tipo: 'check', fecha: true },
-      { id: 'hb6', tipo: 'number' },
+      { id: 'cred6', tipo: 'check', grupoEspecial: true },
+      { id: 'sup6', tipo: 'check', fecha: true, grupoEspecial: true },
+      { id: 'hb6', tipo: 'number', grupoEspecial: true },
       { id: 'sup7', tipo: 'check', fecha: true },
       { id: 'sup8', tipo: 'check', fecha: true },
-      { id: 'cred9', tipo: 'check' },
-      { id: 'sup9', tipo: 'check', fecha: true },
-      { id: 'hb9', tipo: 'number' },
+      { id: 'cred9', tipo: 'check', grupoEspecial: true },
+      { id: 'sup9', tipo: 'check', fecha: true, grupoEspecial: true },
+      { id: 'hb9', tipo: 'number', grupoEspecial: true },
       { id: 'sup10', tipo: 'check', fecha: true },
       { id: 'sup11', tipo: 'check', fecha: true },
-      { id: 'cred12', tipo: 'check' },
-      { id: 'ta12', tipo: 'check' },
-      { id: 'hb12', tipo: 'number' }
+      { id: 'cred12', tipo: 'check', grupoEspecial: true },
+      { id: 'ta12', tipo: 'check', grupoEspecial: true },
+      { id: 'hb12', tipo: 'number', grupoEspecial: true }
     ];
 
     const suplementosOrden = ['sup4', 'sup5', 'sup6', 'sup7', 'sup8', 'sup9', 'sup10', 'sup11'];
+    const controlesEspeciales = ['cred6', 'sup6', 'hb6', 'cred9', 'sup9', 'hb9', 'cred12', 'ta12', 'hb12'];
+    const mesesPrioritarios = {
+      6: ['cred6', 'sup6', 'hb6'],
+      9: ['cred9', 'sup9', 'hb9'],
+      12: ['cred12', 'ta12', 'hb12']
+    };
 
     function sumarDias(fecha, dias) {
       if (!fecha) return '';
@@ -344,6 +424,43 @@
       return { clase: '', badge: 'badge-verde', texto: 'Programado' };
     }
 
+    function controlCumplido(el) {
+      if (!el) return false;
+      if (el.type === 'checkbox') return el.checked;
+      return el.value.trim() !== '';
+    }
+
+    function pintarControlEspecial(id) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const td = el.closest('td');
+      td.classList.remove('verde', 'naranja', 'rojo');
+      td.classList.add(controlCumplido(el) ? 'verde' : 'rojo');
+    }
+
+    function mesPrioritarioCompleto(mes) {
+      const ids = mesesPrioritarios[mes] || [];
+      return ids.every(id => controlCumplido(document.getElementById(id)));
+    }
+
+    function obtenerFaltantesMesPrioritario(mes) {
+      const nombresCampos = {
+        cred6: 'CRED 6 meses',
+        sup6: 'Suplementación 6 meses',
+        hb6: 'Dosaje Hb 6 meses',
+        cred9: 'CRED 9 meses',
+        sup9: 'Suplementación 9 meses',
+        hb9: 'Dosaje Hb 9 meses',
+        cred12: 'CRED 12 meses',
+        ta12: 'TA 12 meses',
+        hb12: 'Dosaje Hb 12 meses'
+      };
+
+      return (mesesPrioritarios[mes] || [])
+        .filter(id => !controlCumplido(document.getElementById(id)))
+        .map(id => nombresCampos[id] || id);
+    }
+
     function crearFilaSeguimiento(nino = null) {
       const tbody = document.getElementById('tablaSeguimiento');
       tbody.innerHTML = '';
@@ -363,24 +480,27 @@
         const fecha = fechas[c.id] || '';
         const td = document.createElement('td');
 
-        if (c.fecha) {
-          const estado = estadoPorFecha(fecha, !!valor);
-          if (estado.clase) td.classList.add(estado.clase);
+        if (c.tipo === 'check') {
+          td.innerHTML = `
+            <input class="check" id="${c.id}" name="${c.id}" type="checkbox" ${valor === true || valor === 'true' ? 'checked' : ''} onchange="actualizarColoresEspeciales()">
+            ${c.fecha ? `<div class="fecha-mini">${fecha || '--'}</div>` : ''}
+          `;
+        } else {
+          const valorHb = actual.seguimiento && actual.seguimiento[c.id] !== undefined ? actual.seguimiento[c.id] : '';
+          td.innerHTML = `<input id="${c.id}" name="${c.id}" type="number" step="0.1" placeholder="Hb ${c.id.replace('hb', '')} meses" value="${valorHb || ''}" oninput="actualizarColoresEspeciales()">`;
         }
 
-        if (c.tipo === 'check') {
-          td.innerHTML = `<input class="check" id="${c.id}" type="checkbox" ${valor ? 'checked' : ''} onchange="actualizarColores()">${c.fecha ? `<div class="fecha-mini">${fecha || '--'}</div>` : ''}`;
-        } else {
-          td.innerHTML = `<input id="${c.id}" type="number" step="0.1" placeholder="Hb" value="${valor || ''}">`;
-        }
         tr.appendChild(td);
       });
+
       tbody.appendChild(tr);
+      actualizarColoresEspeciales();
     }
 
     function actualizarColores() {
       const primeraEntrega = document.getElementById('primeraEntrega').value;
       const fechas = fechasAutomaticas(primeraEntrega);
+
       suplementosOrden.forEach(id => {
         const input = document.getElementById(id);
         if (!input) return;
@@ -391,6 +511,14 @@
       });
     }
 
+    function actualizarColoresEspeciales() {
+      actualizarColores();
+
+      controlesEspeciales.forEach(id => {
+        pintarControlEspecial(id);
+      });
+    }
+
     function obtenerDatosFormulario(conId = true) {
       const seguimiento = {};
       controles.forEach(c => {
@@ -398,6 +526,7 @@
         if (!el) return;
         seguimiento[c.id] = c.tipo === 'check' ? el.checked : el.value;
       });
+
       return {
         id: conId ? document.getElementById('id').value : '',
         nombres: document.getElementById('nombres').value.trim(),
@@ -414,7 +543,7 @@
     function actualizarVistaFormulario() {
       document.getElementById('edadActual').textContent = 'Edad actual: ' + calcularEdad(document.getElementById('fechaNacimiento').value);
       crearFilaSeguimiento();
-      actualizarColores();
+      actualizarColoresEspeciales();
     }
 
     const URL_GOOGLE_SCRIPT = 'https://script.google.com/macros/s/AKfycby4ob2myHsozSJv9EkV421LVAqGjc_swVfnEy5_ek1Z2H4HTnZqdiVDor5_E9uq98FF/exec';
@@ -447,6 +576,15 @@
       if (faltan.length > 0) {
         mostrarNotificacion('Falta llenar: ' + faltan.join(', '), 'error');
         return;
+      }
+
+      const faltantesPrioritarios = [];
+      Object.keys(mesesPrioritarios).forEach(mes => {
+        obtenerFaltantesMesPrioritario(mes).forEach(item => faltantesPrioritarios.push(item));
+      });
+
+      if (faltantesPrioritarios.length > 0) {
+        mostrarNotificacion('Aviso: faltan controles prioritarios: ' + faltantesPrioritarios.join(', '), 'warning');
       }
 
       const callbackName = 'guardarRespuesta_' + Date.now();
@@ -488,6 +626,16 @@
       return estadoPorFecha(proxima, false);
     }
 
+    function mesPrioritarioCompletoEnNino(nino, mes) {
+      const ids = mesesPrioritarios[mes] || [];
+      return ids.every(id => {
+        if (!nino.seguimiento) return false;
+        const valor = nino.seguimiento[id];
+        if (typeof valor === 'boolean') return valor;
+        return String(valor || '').trim() !== '' && String(valor).trim() !== 'false';
+      });
+    }
+
     function mostrarAlertasVencimiento() {
       const contenedor = document.getElementById('resumenAlertas');
       if (!contenedor) return;
@@ -495,12 +643,21 @@
       const alertas = [];
 
       ninos.forEach(n => {
+        const nombreCompleto = `${n.nombres || ''} ${n.apellidos || ''}`.trim();
         const proxima = proximaEntregaPendiente(n);
-        if (proxima === 'Completo') return;
-        const estado = estadoPorFecha(proxima, false);
-        if (estado.texto === 'Vencido' || estado.texto === 'Por vencer') {
-          alertas.push(`${n.nombres || ''} ${n.apellidos || ''} - ${estado.texto} - Próxima entrega: ${proxima}`);
+
+        if (proxima !== 'Completo') {
+          const estado = estadoPorFecha(proxima, false);
+          if (estado.texto === 'Vencido' || estado.texto === 'Por vencer') {
+            alertas.push(`${nombreCompleto} - ${estado.texto} - Próxima suplementación: ${proxima}`);
+          }
         }
+
+        [6, 9, 12].forEach(mes => {
+          if (!mesPrioritarioCompletoEnNino(n, mes)) {
+            alertas.push(`${nombreCompleto} - PRIORIDAD: falta completar controles de ${mes} meses`);
+          }
+        });
       });
 
       if (alertas.length === 0) {
@@ -510,8 +667,8 @@
       }
 
       contenedor.style.display = 'block';
-      contenedor.innerHTML = `<strong>Notificación de suplementación:</strong> Hay ${alertas.length} niño(s) con suplemento vencido o por vencer.<ul>${alertas.map(a => `<li>${a}</li>`).join('')}</ul>`;
-      mostrarNotificacion(`Atención: hay ${alertas.length} niño(s) con suplementación vencida o por vencer.`, 'warning');
+      contenedor.innerHTML = `<strong>Alertas prioritarias:</strong> Hay ${alertas.length} alerta(s) de suplementación o controles de 6, 9 y 12 meses.<ul>${alertas.map(a => `<li>${a}</li>`).join('')}</ul>`;
+      mostrarNotificacion(`Atención: hay ${alertas.length} alerta(s) prioritarias.`, 'warning');
     }
 
     function mostrarBase() {
@@ -531,7 +688,7 @@
         const tr = document.createElement('tr');
         if (estado.clase) tr.classList.add(estado.clase);
         tr.innerHTML = `
-          <td><span class="badge ${estado.badge}">${estado.texto}</span></td>
+          <td><span class="badge ${estado.badge}">${estado.texto}</span>${(!mesPrioritarioCompletoEnNino(n, 6) || !mesPrioritarioCompletoEnNino(n, 9) || !mesPrioritarioCompletoEnNino(n, 12)) ? '<br><span class="badge badge-rojo">Falta 6/9/12</span>' : ''}</td>
           <td>${n.nombres || ''} ${n.apellidos || ''}</td>
           <td>${n.dni || ''}</td>
           <td>${n.hc || ''}</td>
@@ -558,7 +715,7 @@
       document.getElementById('primeraEntrega').value = n.primeraEntrega || '';
       crearFilaSeguimiento(n);
       document.getElementById('edadActual').textContent = 'Edad actual: ' + calcularEdad(n.fechaNacimiento);
-      actualizarColores();
+      actualizarColoresEspeciales();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -571,7 +728,10 @@
 
     function eliminarNinoActual() {
       const id = document.getElementById('id').value;
-      if (!id) { mostrarNotificacion('Primero seleccione un niño para eliminar.', 'error'); return; }
+      if (!id) {
+        mostrarNotificacion('Primero seleccione un niño para eliminar.', 'error');
+        return;
+      }
       if (!confirm('¿Eliminar este niño de Google Sheets?')) return;
 
       const callbackName = 'eliminarRespuesta_' + Date.now();
@@ -660,6 +820,7 @@
     crearFilaSeguimiento();
     cargarDesdeGoogle();
   </script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </body>
 </html>
