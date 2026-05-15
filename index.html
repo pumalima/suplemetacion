@@ -17,6 +17,25 @@
       font-weight: bold;
     }
 
+    h1 { margin: 25px 20px; }
+    .card { background: white; margin: 0 20px 22px; padding: 28px 22px 22px; border-radius: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .form-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+    input { padding: 11px; border: 1px solid #ccc; border-radius: 5px; font-size: 14px; }
+    label { font-weight: bold; }
+    .info { margin-top: 18px; font-weight: bold; font-size: 18px; }
+    button { margin-top: 24px; padding: 16px 22px; border: none; border-radius: 10px; color: white; font-weight: bold; cursor: pointer; font-size: 16px; }
+    .guardar { background: #38a84a; }
+    .faltantes { background: #e53935; }
+    .table-wrap { overflow-x: auto; margin: 0 20px 30px; }
+    table { width: 100%; border-collapse: collapse; background: white; font-size: 14px; }
+    th, td { border: 1px solid #ddd; padding: 10px 8px; text-align: center; white-space: nowrap; }
+    th { background: #d8d0eb; }
+    .ok { background: #bff5bf; font-weight: bold; }
+    .falto { background: #ffc8c8; color: #b00000; font-weight: bold; }
+    .temprano { background: #ffd59e; color: #9a4b00; font-weight: bold; }
+    .vacio { background: #fff; }
+    .borrar { margin: 0; background: #777; padding: 7px 10px; }
+
     .alerta-ok {
       background: #c8f7c5;
       color: #146314;
@@ -45,37 +64,10 @@
     }
 
     @media (max-width: 768px) {
-      .form-row {
-        flex-direction: column;
-        align-items: stretch;
-      }
-
-      input, button {
-        width: 100%;
-      }
-
-      table {
-        font-size: 12px;
-      }
+      .form-row { flex-direction: column; align-items: stretch; }
+      input, button { width: 100%; }
+      table { font-size: 12px; }
     }
-    h1 { margin: 25px 20px; }
-    .card { background: white; margin: 0 20px 22px; padding: 28px 22px 22px; border-radius: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-    .form-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
-    input { padding: 11px; border: 1px solid #ccc; border-radius: 5px; font-size: 14px; }
-    label { font-weight: bold; }
-    .info { margin-top: 18px; font-weight: bold; font-size: 18px; }
-    button { margin-top: 24px; padding: 16px 22px; border: none; border-radius: 10px; color: white; font-weight: bold; cursor: pointer; font-size: 16px; }
-    .guardar { background: #38a84a; }
-    .faltantes { background: #e53935; }
-    .table-wrap { overflow-x: auto; margin: 0 20px 30px; }
-    table { width: 100%; border-collapse: collapse; background: white; font-size: 14px; }
-    th, td { border: 1px solid #ddd; padding: 10px 8px; text-align: center; white-space: nowrap; }
-    th { background: #d8d0eb; }
-    .ok { background: #bff5bf; font-weight: bold; }
-    .falto { background: #ffc8c8; color: #b00000; font-weight: bold; }
-    .temprano { background: #ffd59e; color: #9a4b00; font-weight: bold; }
-    .vacio { background: #fff; }
-    .borrar { margin: 0; background: #777; padding: 7px 10px; }
   </style>
 </head>
 <body>
@@ -86,21 +78,22 @@
     <div class="form-row">
       <input id="nombre" type="text" placeholder="Nombre del Niño" />
       <input id="dni" type="text" placeholder="DNI" oninput="buscarPorDni()" />
+
       <label for="fechaControl">Fecha de suplementación:</label>
       <input id="fechaControl" type="date" />
 
       <label for="fechaNacimiento">Fecha de nacimiento:</label>
       <input id="fechaNacimiento" type="date" />
+
       <input id="dosajeHb" type="number" step="0.1" placeholder="Dosaje Hb" style="display:none;" />
     </div>
 
     <div class="info">Edad actual: <span id="edadActual">0 meses</span></div>
     <div id="alertas"></div>
     <div class="info">Próxima suplementación: <span id="proximaCita">-</span></div>
-    
 
     <button class="guardar" onclick="guardarRegistro('Asistió')">Guardar Registro</button>
-    <button class="faltantes" onclick="guardarRegistro('Faltó')">Descargar Reporte Faltantes</button>
+    <button class="faltantes" onclick="guardarRegistro('Faltó')">Registrar Faltó</button>
   </section>
 
   <div class="table-wrap">
@@ -111,7 +104,6 @@
           <th rowspan="2">DNI</th>
           <th rowspan="2">Fecha Nacimiento</th>
           <th rowspan="2">Edad Actual</th>
-          
           <th colspan="2">4 meses</th>
           <th colspan="2">5 meses</th>
           <th colspan="3">6 meses</th>
@@ -141,38 +133,76 @@
   </div>
 
   <script>
+    const URL_SCRIPT = 'https://script.google.com/macros/s/AKfycbzGPJrwoPQWPmr4qGobiemXKUuNbCphMdDkX0vwQQaAUawG4ZRIidUvWxBy9-rHOMh8bA/exec';
+
     let registros = JSON.parse(localStorage.getItem('registrosNinos')) || [];
 
     const fechaNacimiento = document.getElementById('fechaNacimiento');
+    const fechaControlInput = document.getElementById('fechaControl');
     const edadActual = document.getElementById('edadActual');
-    
     const tablaRegistros = document.getElementById('tablaRegistros');
-
-    
 
     fechaNacimiento.addEventListener('change', () => {
       edadActual.textContent = calcularEdadTexto(fechaNacimiento.value);
       mostrarCampoDosaje();
     });
 
+    fechaControlInput.addEventListener('change', () => {
+      mostrarCampoDosaje();
+    });
+
     function buscarPorDni() {
       const dni = document.getElementById('dni').value.trim();
-      const encontrado = registros.find(r => r.dni === dni);
 
-      if (encontrado) {
+      // Buscar último registro del niño
+      const encontrados = registros.filter(r => r.dni === dni);
+
+      if (encontrados.length > 0) {
+        const encontrado = encontrados[encontrados.length - 1];
+
         document.getElementById('nombre').value = encontrado.nombre;
         fechaNacimiento.value = encontrado.nacimiento;
         edadActual.textContent = calcularEdadTexto(encontrado.nacimiento);
+
+        // Mostrar próxima fecha sugerida
+        if (encontrado.controles) {
+          const meses = Object.keys(encontrado.controles).map(Number);
+
+          if (meses.length > 0) {
+            const ultimoMes = Math.max(...meses);
+            const ultimoControl = encontrado.controles[ultimoMes];
+
+            if (ultimoControl && ultimoControl.fecha) {
+              const fecha = convertirFecha(ultimoControl.fecha);
+              fecha.setDate(fecha.getDate() + 30);
+
+              document.getElementById('proximaCita').textContent = formatearFecha(fecha);
+            }
+          }
+        }
       }
 
       mostrarCampoDosaje();
     }
 
     function mostrarCampoDosaje() {
-      const meses = calcularMeses(fechaNacimiento.value);
+      const fechaControl = fechaControlInput.value;
       const campoHb = document.getElementById('dosajeHb');
-      campoHb.style.display = [6, 9, 12].includes(meses) ? 'inline-block' : 'none';
-      if (![6, 9, 12].includes(meses)) campoHb.value = '';
+
+      if (!fechaNacimiento.value || !fechaControl) {
+        campoHb.style.display = 'none';
+        campoHb.value = '';
+        return;
+      }
+
+      const meses = calcularMesesEntreFechas(fechaNacimiento.value, fechaControl);
+
+      if ([6, 9, 12].includes(meses)) {
+        campoHb.style.display = 'inline-block';
+      } else {
+        campoHb.style.display = 'none';
+        campoHb.value = '';
+      }
     }
 
     function calcularMeses(fecha) {
@@ -184,13 +214,12 @@
       return Math.max(meses, 0);
     }
 
-    function calcularMesesEntreFechas(fechaNacimiento, fechaControl) {
-      const nacimiento = new Date(fechaNacimiento + 'T00:00:00');
-      const control = new Date(fechaControl + 'T00:00:00');
+    function calcularMesesEntreFechas(fechaNacimientoValor, fechaControlValor) {
+      const nacimiento = new Date(fechaNacimientoValor + 'T00:00:00');
+      const control = new Date(fechaControlValor + 'T00:00:00');
 
       let meses = (control.getFullYear() - nacimiento.getFullYear()) * 12;
       meses += control.getMonth() - nacimiento.getMonth();
-
       if (control.getDate() < nacimiento.getDate()) meses--;
 
       return Math.max(meses, 0);
@@ -212,12 +241,11 @@
       const nombre = document.getElementById('nombre').value.trim();
       const dni = document.getElementById('dni').value.trim();
       const nacimiento = fechaNacimiento.value;
-      const meses = calcularMeses(nacimiento);
+      const fechaControl = fechaControlInput.value;
       const dosajeHb = document.getElementById('dosajeHb').value;
-      const fechaControl = document.getElementById('fechaControl').value;
 
       if (!nombre || !dni || !nacimiento || !fechaControl) {
-        alert('Complete nombre, DNI y fecha de nacimiento.');
+        alert('Complete nombre, DNI, fecha de nacimiento y fecha de suplementación.');
         return;
       }
 
@@ -228,22 +256,22 @@
         return;
       }
 
+      const fechaSuplementacionTexto = formatearFecha(new Date(fechaControl + 'T00:00:00'));
       const indexExistente = registros.findIndex(r => r.dni === dni);
 
       if (indexExistente !== -1) {
-        registros[indexExistente].meses = mesControl;
+        registros[indexExistente].nombre = nombre;
+        registros[indexExistente].nacimiento = nacimiento;
+        registros[indexExistente].meses = Math.max(registros[indexExistente].meses || 0, mesControl);
         registros[indexExistente].edad = calcularEdadTexto(nacimiento);
-        registros[indexExistente].fechaRegistro = formatearFecha(new Date());
         registros[indexExistente].estado = estado;
         registros[indexExistente].dosajeHb = dosajeHb;
 
-        if (!registros[indexExistente].controles) {
-          registros[indexExistente].controles = {};
-        }
+        if (!registros[indexExistente].controles) registros[indexExistente].controles = {};
 
         registros[indexExistente].controles[mesControl] = {
           estado,
-          fecha: formatearFecha(new Date(fechaControl)),
+          fecha: fechaSuplementacionTexto,
           dosajeHb
         };
       } else {
@@ -253,58 +281,51 @@
           nacimiento,
           meses: mesControl,
           edad: calcularEdadTexto(nacimiento),
-          fechaRegistro: formatearFecha(new Date(fechaControl)),
           dosajeHb,
           estado,
           controles: {
             [mesControl]: {
               estado,
-              fecha: formatearFecha(new Date(fechaControl)),
+              fecha: fechaSuplementacionTexto,
               dosajeHb
             }
           }
         });
       }
 
-      fetch('https://script.google.com/macros/s/AKfycbzGPJrwoPQWPmr4qGobiemXKUuNbCphMdDkX0vwQQaAUawG4ZRIidUvWxBy9-rHOMh8bA/exec', {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: {
-          'Content-Type': 'text/plain;charset=utf-8'
-        },
-        body: JSON.stringify({
-          nombre: nombre,
-          dni: dni,
-          fechaNacimiento: nacimiento,
-          fechaSuplementacion: fechaControl,
-          mes: mesControl,
-          estado: estado,
-          hb: dosajeHb
-        })
+      guardarEnGoogleSheets({
+        nombre,
+        dni,
+        fechaNacimiento: nacimiento,
+        fechaSuplementacion: fechaControl,
+        mes: mesControl,
+        estado,
+        hb: dosajeHb
       });
 
       localStorage.setItem('registrosNinos', JSON.stringify(registros));
-
       mostrarAlertas(mesControl, dosajeHb, fechaControl);
       calcularProximaCita(fechaControl);
       limpiarFormulario();
       mostrarRegistros();
     }
 
+    function guardarEnGoogleSheets(datos) {
+      fetch(URL_SCRIPT, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(datos)
+      });
+    }
+
     function celdaControl(registro, mes, texto) {
       const control = registro.controles ? registro.controles[mes] : null;
       const esDosaje = texto === 'Dosaje Hb';
 
-      // Si registra un mes posterior y falta uno anterior inmediato.
-      // Ejemplo: tiene 5 meses pero no 4 = FALTÓ.
       if (!control) {
-        const mesesRegistrados = registro.controles
-          ? Object.keys(registro.controles).map(Number)
-          : [];
-
-        const mayorMes = mesesRegistrados.length
-          ? Math.max(...mesesRegistrados)
-          : 0;
+        const mesesRegistrados = registro.controles ? Object.keys(registro.controles).map(Number) : [];
+        const mayorMes = mesesRegistrados.length ? Math.max(...mesesRegistrados) : 0;
 
         if (mayorMes > mes) {
           return `<td class="falto">FALTÓ</td>`;
@@ -331,7 +352,6 @@
         aviso = '<br>FUERA DE FECHA';
       }
 
-      // Dosaje Hb muestra solo el valor, pero también se pinta según la fecha.
       if (esDosaje) {
         return `<td class="${clase}">${control.dosajeHb || ''}${aviso}</td>`;
       }
@@ -347,13 +367,11 @@
         .filter(m => m < mesActual && registro.controles[m] && registro.controles[m].estado === 'Asistió')
         .sort((a, b) => b - a);
 
-      // Primera entrega registrada: se considera correcta.
       if (mesesRegistrados.length === 0) return 'OK';
 
       const mesAnterior = mesesRegistrados[0];
       const fechaAnterior = convertirFecha(registro.controles[mesAnterior].fecha);
       const fechaActual = convertirFecha(registro.controles[mesActual].fecha);
-
       const diferenciaDias = Math.round((fechaActual - fechaAnterior) / (1000 * 60 * 60 * 24));
 
       if (diferenciaDias < 25) return 'ANTES';
@@ -368,6 +386,7 @@
 
     function mostrarRegistros() {
       tablaRegistros.innerHTML = '';
+
       registros.forEach((r, index) => {
         const fila = document.createElement('tr');
         fila.innerHTML = `
@@ -375,7 +394,6 @@
           <td>${r.dni}</td>
           <td>${r.nacimiento}</td>
           <td>${r.edad}</td>
-          
 
           ${celdaControl(r, 4, 'CRED')}
           ${celdaControl(r, 4, 'Suplem.')}
@@ -411,12 +429,11 @@
     function limpiarFormulario() {
       document.getElementById('nombre').value = '';
       document.getElementById('dni').value = '';
-      document.getElementById('fechaControl').value = '';
+      fechaControlInput.value = '';
       fechaNacimiento.value = '';
       document.getElementById('dosajeHb').value = '';
       document.getElementById('dosajeHb').style.display = 'none';
       edadActual.textContent = '0 meses';
-      
     }
 
     function mostrarAlertas(mesControl, dosajeHb, fechaControl) {
@@ -445,19 +462,16 @@
     function calcularProximaCita(fechaControl) {
       const fecha = new Date(fechaControl + 'T00:00:00');
       fecha.setDate(fecha.getDate() + 30);
-
       document.getElementById('proximaCita').textContent = formatearFecha(fecha);
     }
 
     function borrarRegistro(index) {
       const registro = registros[index];
 
-      fetch('https://script.google.com/macros/s/AKfycbzGPJrwoPQWPmr4qGobiemXKUuNbCphMdDkX0vwQQaAUawG4ZRIidUvWxBy9-rHOMh8bA/exec', {
+      fetch(URL_SCRIPT, {
         method: 'POST',
         mode: 'no-cors',
-        headers: {
-          'Content-Type': 'text/plain;charset=utf-8'
-        },
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({
           accion: 'eliminar',
           dni: registro.dni
