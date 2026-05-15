@@ -7,16 +7,7 @@
   <style>
     * { box-sizing: border-box; }
     body { font-family: Arial, sans-serif; margin: 0; background: #eef3f8; color: #000; }
-
-    .mensa {
-      background: #005baa;
-      color: white;
-      padding: 15px;
-      text-align: center;
-      font-size: 24px;
-      font-weight: bold;
-    }
-
+    .mensa { background: #005baa; color: white; padding: 15px; text-align: center; font-size: 24px; font-weight: bold; }
     h1 { margin: 25px 20px; }
     .card { background: white; margin: 0 20px 22px; padding: 28px 22px 22px; border-radius: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
     .form-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
@@ -35,34 +26,9 @@
     .temprano { background: #ffd59e; color: #9a4b00; font-weight: bold; }
     .vacio { background: #fff; }
     .borrar { margin: 0; background: #777; padding: 7px 10px; }
-
-    .alerta-ok {
-      background: #c8f7c5;
-      color: #146314;
-      padding: 10px;
-      border-radius: 8px;
-      margin-top: 10px;
-      font-weight: bold;
-    }
-
-    .alerta-warning {
-      background: #ffe0a6;
-      color: #9a5a00;
-      padding: 10px;
-      border-radius: 8px;
-      margin-top: 10px;
-      font-weight: bold;
-    }
-
-    .alerta-danger {
-      background: #ffcaca;
-      color: #9b0000;
-      padding: 10px;
-      border-radius: 8px;
-      margin-top: 10px;
-      font-weight: bold;
-    }
-
+    .alerta-ok { background: #c8f7c5; color: #146314; padding: 10px; border-radius: 8px; margin-top: 10px; font-weight: bold; }
+    .alerta-warning { background: #ffe0a6; color: #9a5a00; padding: 10px; border-radius: 8px; margin-top: 10px; font-weight: bold; }
+    .alerta-danger { background: #ffcaca; color: #9b0000; padding: 10px; border-radius: 8px; margin-top: 10px; font-weight: bold; }
     @media (max-width: 768px) {
       .form-row { flex-direction: column; align-items: stretch; }
       input, button { width: 100%; }
@@ -78,13 +44,10 @@
     <div class="form-row">
       <input id="nombre" type="text" placeholder="Nombre del Niño" />
       <input id="dni" type="text" placeholder="DNI" oninput="buscarPorDni()" />
-
       <label for="fechaControl">Fecha de suplementación:</label>
       <input id="fechaControl" type="date" />
-
       <label for="fechaNacimiento">Fecha de nacimiento:</label>
       <input id="fechaNacimiento" type="date" />
-
       <input id="dosajeHb" type="number" step="0.1" placeholder="Dosaje Hb" style="display:none;" />
     </div>
 
@@ -134,7 +97,6 @@
 
   <script>
     const URL_SCRIPT = 'https://script.google.com/macros/s/AKfycbzGPJrwoPQWPmr4qGobiemXKUuNbCphMdDkX0vwQQaAUawG4ZRIidUvWxBy9-rHOMh8bA/exec';
-
     let registros = JSON.parse(localStorage.getItem('registrosNinos')) || [];
 
     const fechaNacimiento = document.getElementById('fechaNacimiento');
@@ -153,35 +115,27 @@
 
     function buscarPorDni() {
       const dni = document.getElementById('dni').value.trim();
-
-      // Buscar último registro del niño
       const encontrados = registros.filter(r => r.dni === dni);
 
       if (encontrados.length > 0) {
         const encontrado = encontrados[encontrados.length - 1];
-
         document.getElementById('nombre').value = encontrado.nombre;
         fechaNacimiento.value = encontrado.nacimiento;
         edadActual.textContent = calcularEdadTexto(encontrado.nacimiento);
 
-        // Mostrar próxima fecha sugerida
         if (encontrado.controles) {
           const meses = Object.keys(encontrado.controles).map(Number);
-
           if (meses.length > 0) {
             const ultimoMes = Math.max(...meses);
             const ultimoControl = encontrado.controles[ultimoMes];
-
             if (ultimoControl && ultimoControl.fecha) {
               const fecha = convertirFecha(ultimoControl.fecha);
               fecha.setDate(fecha.getDate() + 30);
-
               document.getElementById('proximaCita').textContent = formatearFecha(fecha);
             }
           }
         }
       }
-
       mostrarCampoDosaje();
     }
 
@@ -196,7 +150,6 @@
       }
 
       const meses = calcularMesesEntreFechas(fechaNacimiento.value, fechaControl);
-
       if ([6, 9, 12].includes(meses)) {
         campoHb.style.display = 'inline-block';
       } else {
@@ -217,11 +170,8 @@
     function calcularMesesEntreFechas(fechaNacimientoValor, fechaControlValor) {
       const nacimiento = new Date(fechaNacimientoValor + 'T00:00:00');
       const control = new Date(fechaControlValor + 'T00:00:00');
-
-      let meses = (control.getFullYear() - nacimiento.getFullYear()) * 12;
-      meses += control.getMonth() - nacimiento.getMonth();
+      let meses = (control.getFullYear() - nacimiento.getFullYear()) * 12 + control.getMonth() - nacimiento.getMonth();
       if (control.getDate() < nacimiento.getDate()) meses--;
-
       return Math.max(meses, 0);
     }
 
@@ -250,7 +200,6 @@
       }
 
       const mesControl = calcularMesesEntreFechas(nacimiento, fechaControl);
-
       if ([6, 9, 12].includes(mesControl) && estado === 'Asistió' && !dosajeHb) {
         alert('Ingrese el valor de Dosaje Hb.');
         return;
@@ -262,34 +211,22 @@
       if (indexExistente !== -1) {
         registros[indexExistente].nombre = nombre;
         registros[indexExistente].nacimiento = nacimiento;
-        registros[indexExistente].meses = Math.max(registros[indexExistente].meses || 0, mesControl);
+        registros[indexExistente].meses = calcularMeses(nacimiento);
         registros[indexExistente].edad = calcularEdadTexto(nacimiento);
         registros[indexExistente].estado = estado;
         registros[indexExistente].dosajeHb = dosajeHb;
-
         if (!registros[indexExistente].controles) registros[indexExistente].controles = {};
-
-        registros[indexExistente].controles[mesControl] = {
-          estado,
-          fecha: fechaSuplementacionTexto,
-          dosajeHb
-        };
+        registros[indexExistente].controles[mesControl] = { estado, fecha: fechaSuplementacionTexto, dosajeHb };
       } else {
         registros.push({
           nombre,
           dni,
           nacimiento,
-          meses: mesControl,
+          meses: calcularMeses(nacimiento),
           edad: calcularEdadTexto(nacimiento),
           dosajeHb,
           estado,
-          controles: {
-            [mesControl]: {
-              estado,
-              fecha: fechaSuplementacionTexto,
-              dosajeHb
-            }
-          }
+          controles: { [mesControl]: { estado, fecha: fechaSuplementacionTexto, dosajeHb } }
         });
       }
 
@@ -322,15 +259,13 @@
     function celdaControl(registro, mes, texto) {
       const control = registro.controles ? registro.controles[mes] : null;
       const esDosaje = texto === 'Dosaje Hb';
+      const edadMesesActual = Math.min(calcularMeses(registro.nacimiento), 12);
 
+      // Si el niño ya llegó a ese mes y no hay registro, se marca FALTÓ.
       if (!control) {
-        const mesesRegistrados = registro.controles ? Object.keys(registro.controles).map(Number) : [];
-        const mayorMes = mesesRegistrados.length ? Math.max(...mesesRegistrados) : 0;
-
-        if (mayorMes > mes) {
+        if (edadMesesActual >= mes) {
           return `<td class="falto">FALTÓ</td>`;
         }
-
         return '<td class="vacio"></td>';
       }
 
@@ -341,39 +276,27 @@
       const estadoFecha = evaluarFechaEntrega(registro, mes);
       let clase = 'ok';
       let aviso = '';
-
-      if (estadoFecha === 'ANTES') {
-        clase = 'temprano';
-        aviso = '<br>ANTES DE FECHA';
-      }
-
-      if (estadoFecha === 'FUERA') {
-        clase = 'falto';
-        aviso = '<br>FUERA DE FECHA';
-      }
+      if (estadoFecha === 'ANTES') { clase = 'temprano'; aviso = '<br>ANTES DE FECHA'; }
+      if (estadoFecha === 'FUERA') { clase = 'falto'; aviso = '<br>FUERA DE FECHA'; }
 
       if (esDosaje) {
         return `<td class="${clase}">${control.dosajeHb || ''}${aviso}</td>`;
       }
-
       return `<td class="${clase}">${texto}<br>${control.fecha}${aviso}</td>`;
     }
 
     function evaluarFechaEntrega(registro, mesActual) {
       if (!registro.controles || !registro.controles[mesActual]) return 'VACIO';
-
       const mesesRegistrados = Object.keys(registro.controles)
         .map(Number)
         .filter(m => m < mesActual && registro.controles[m] && registro.controles[m].estado === 'Asistió')
         .sort((a, b) => b - a);
 
       if (mesesRegistrados.length === 0) return 'OK';
-
       const mesAnterior = mesesRegistrados[0];
       const fechaAnterior = convertirFecha(registro.controles[mesAnterior].fecha);
       const fechaActual = convertirFecha(registro.controles[mesActual].fecha);
       const diferenciaDias = Math.round((fechaActual - fechaAnterior) / (1000 * 60 * 60 * 24));
-
       if (diferenciaDias < 25) return 'ANTES';
       if (diferenciaDias > 45) return 'FUERA';
       return 'OK';
@@ -386,44 +309,38 @@
 
     function mostrarRegistros() {
       tablaRegistros.innerHTML = '';
-
       registros.forEach((r, index) => {
+        r.meses = calcularMeses(r.nacimiento);
+        r.edad = calcularEdadTexto(r.nacimiento);
         const fila = document.createElement('tr');
         fila.innerHTML = `
           <td>${r.nombre}</td>
           <td>${r.dni}</td>
           <td>${r.nacimiento}</td>
           <td>${r.edad}</td>
-
           ${celdaControl(r, 4, 'CRED')}
           ${celdaControl(r, 4, 'Suplem.')}
-
           ${celdaControl(r, 5, 'CRED')}
           ${celdaControl(r, 5, 'Suplem.')}
-
           ${celdaControl(r, 6, 'CRED')}
           ${celdaControl(r, 6, 'Suplem.')}
           ${celdaControl(r, 6, 'Dosaje Hb')}
-
           ${celdaControl(r, 7, 'Suplem.')}
           ${celdaControl(r, 8, 'Suplem.')}
-
           ${celdaControl(r, 9, 'CRED')}
           ${celdaControl(r, 9, 'Suplem.')}
           ${celdaControl(r, 9, 'Dosaje Hb')}
-
           ${celdaControl(r, 10, 'Suplem.')}
           ${celdaControl(r, 11, 'Suplem.')}
-
           ${celdaControl(r, 12, 'CRED')}
           ${celdaControl(r, 12, 'TA')}
           ${celdaControl(r, 12, 'Dosaje Hb')}
-
           <td class="${r.estado === 'Faltó' ? 'falto' : 'ok'}">${r.estado}</td>
           <td><button class="borrar" onclick="borrarRegistro(${index})">Borrar</button></td>
         `;
         tablaRegistros.appendChild(fila);
       });
+      localStorage.setItem('registrosNinos', JSON.stringify(registros));
     }
 
     function limpiarFormulario() {
@@ -439,24 +356,13 @@
     function mostrarAlertas(mesControl, dosajeHb, fechaControl) {
       const alertas = document.getElementById('alertas');
       alertas.innerHTML = '';
-
-      if (mesControl >= 12) {
-        alertas.innerHTML += `<div class="alerta-warning">Niño mayor o igual a 12 meses.</div>`;
-      }
-
-      if (dosajeHb && parseFloat(dosajeHb) < 11) {
-        alertas.innerHTML += `<div class="alerta-danger">Hb baja detectada.</div>`;
-      }
-
+      if (mesControl >= 12) alertas.innerHTML += `<div class="alerta-warning">Niño mayor o igual a 12 meses.</div>`;
+      if (dosajeHb && parseFloat(dosajeHb) < 11) alertas.innerHTML += `<div class="alerta-danger">Hb baja detectada.</div>`;
       const hoy = new Date();
       const fecha = new Date(fechaControl + 'T00:00:00');
       const dias = Math.round((hoy - fecha) / (1000 * 60 * 60 * 24));
-
-      if (dias > 45) {
-        alertas.innerHTML += `<div class="alerta-danger">Niño atrasado en suplementación.</div>`;
-      } else {
-        alertas.innerHTML += `<div class="alerta-ok">Control dentro de fecha.</div>`;
-      }
+      if (dias > 45) alertas.innerHTML += `<div class="alerta-danger">Niño atrasado en suplementación.</div>`;
+      else alertas.innerHTML += `<div class="alerta-ok">Control dentro de fecha.</div>`;
     }
 
     function calcularProximaCita(fechaControl) {
@@ -467,17 +373,12 @@
 
     function borrarRegistro(index) {
       const registro = registros[index];
-
       fetch(URL_SCRIPT, {
         method: 'POST',
         mode: 'no-cors',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({
-          accion: 'eliminar',
-          dni: registro.dni
-        })
+        body: JSON.stringify({ accion: 'eliminar', dni: registro.dni })
       });
-
       registros.splice(index, 1);
       localStorage.setItem('registrosNinos', JSON.stringify(registros));
       mostrarRegistros();
